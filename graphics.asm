@@ -5,18 +5,18 @@
 	colorP2:	.word 0x00ffff00
 .text
 main:
-drawGameOnBoot:			#the initial drawing of the game board
+drawGameOnBoot:				#the initial drawing of the game board
 	li	$t3, 0
 	la	$a0, frameBuffer	# array position
 	li	$a1, 16383		# stop point for this draw section
 	li	$a2, 0x00ffffff		# color
-	jal	drawTop		# draw top white section
+	jal	drawTop			# draw top white section
 	li	$a1, 229376
 	lw	$a2, colorBoard
 	jal	drawBoard		# draw middle blue board section
 	li	$a1, 262144
 	li	$a2, 0x00ffffff
-	jal	drawBot		# draw bottom white section
+	jal	drawBot			# draw bottom white section
 	jal	drawInitialField	# draw initial white circles on board
 	
 	addi	$v0, $zero, 17
@@ -54,18 +54,18 @@ drawInitialField:			# draw 7x6 white circles of radius 17 in the board
 	sw	$ra, 0($sp)
 	
 	li	$t4, 46655		# hardcoded start point for first circle
-	li	$a2, 17		# circle radius
+	li	$a2, 17			# circle radius
 	li	$a3, 0x00ffffff		# circle color (white)
 	li	$t5, 7			# circles per row
 	li	$t6, 6			# circles per colm
 initialCircleLoop:
 	move	$a0, $t4		# match memory position to next circle
-	jal	fillCircle		# draw circle at current memory position
+	jal	fillCircle		# draw circle at currect memory position
 	addi	$t5, $t5, -1
 	addi	$t4, $t4, 63		# hard coded value to move to space radius 17 circles (x)
 	bnez	$t5, initialCircleLoop	# end of loop for row
 	li	$t5, 7			# reset num circles for row on new row
-	addi	$t4, $t4, 29767	# hard coded value to move to space radius 17 circles (y)
+	addi	$t4, $t4, 29767		# hard coded value to move to space radius 17 circles (y)
 	addi	$t6, $t6, -1
 	bnez	$t6, initialCircleLoop	# end of loop for colm
 	
@@ -74,13 +74,13 @@ initialCircleLoop:
 	jr	$ra
 
 	
-fillCircle:				# fill circle at pixel number $a0, radius $a2, with color $a3
+fillCircle:				# fill circle at memory address $a0, radius $a2, with color $a3
 
 	addi	$sp, $sp, -8
 	sw	$ra, 0($sp)
 	sw	$s0, 4($sp)
-	add	$s0, $a2, $zero	# needed for keeping the initial radius saved between func calls
-	li	$t0, 512		# hard coded value to separate x and y values in the memory address
+	add	$s0, $a2, $zero		# needed for keeping the initial radius saved between func calls
+	li	$t0, 512		# hard coded value to seperate x and y values in the memory address
 	div	$a0, $t0
 	mfhi	$a0			# remainder = x cord = $a0
 	mflo	$a1			# quotient  = y cord = $a1
@@ -88,7 +88,7 @@ fillCircleLoop:
 	jal	drawCircle		# draw circle at x,y cords, (just outline, not filled!
 	addi	$a2, $a2, -1		# reduce radius by 1 and loop to fill in circle
 	bnez	$a2, fillCircleLoop
-	add	$a2, $s0, $zero	# reset $a2 to initial radius before moving to next circle
+	add	$a2, $s0, $zero		# reset $a2 to initial radius before moving to next circle
 	lw	$ra, 0($sp)
 	addi	$sp, $sp, 4
 	jr	$ra
@@ -108,7 +108,7 @@ drawCircle:				#draw circle at x = $a0, y = $a1, radius $a2, using color $a3
 	move $s3, $a0
 	move $s4, $a1
 	
-	li	$s0, 1			# setup initial circle algorithm variables
+	li	$s0, 1			# setup intial circle algorithm variables
 	sub	$s0, $s0, $a2		
 	
 	li	$s1, 0
@@ -121,7 +121,7 @@ drawCircle:				#draw circle at x = $a0, y = $a1, radius $a2, using color $a3
 	
 	add	$a0, $s3, $zero
 	add	$a1, $s4, $a2
-	jal	drawPoint		# draw initial 4 points (top bottom left right)
+	jal	drawPoint		# draw initial 4 points (top bottem left right)
 	add	$a0, $s3, $zero
 	sub	$a1, $s4, $a2
 	jal	drawPoint
@@ -146,7 +146,7 @@ circleSkip:
 	
 	add	$a0, $s3, $t8
 	add	$a1, $s4, $t9
-	jal	drawPoint		# draw next point and mirror it into other 7 symmetrical sections of the circle
+	jal	drawPoint		# draw next point and mirror it into other 7 symetrical sections of the circle
 	
 	sub	$a0, $s3, $t8
 	add	$a1, $s4, $t9
@@ -193,14 +193,17 @@ drawPoint:				# fills point at x = $a0, y = $a1, with color $a3
 	addi	$sp, $sp, -4
 	sw	$ra, 0($sp)
 	
-	add	$t2, $a0, $zero	# add y cord to total
+	add	$t2, $a0, $zero		# add y cord to total
 	sll	$t1, $a1, 9		# mult y cord by 512 to revert back into 1d array of pixels
 	add	$t2, $t2, $t1		# add x cord to total
 	sll	$t2, $t2, 2		# align total to word address
 	la	$t0, frameBuffer	# setup initial memory address of pixels
-	add	$t0, $t0, $t2		# add memory address to total to get to final position
+	add	$t0, $t0, $t2		# add memory address to total to get to final positon
 	sw	$a3, 0($t0)		# draw the pixel with color $a3
 	
 	lw	$ra, 0($sp)
 	addi	$sp, $sp, 4
 	jr	$ra
+	
+	
+	
