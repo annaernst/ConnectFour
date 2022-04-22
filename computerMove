@@ -71,7 +71,7 @@ board: .word 0, 0, 0, 0, 0, 0, 0
         mul $t3, $t7, $s3                  
         add $t3, $t3, $t2                
         add $t3, $s4, $t3              
-        #instruction to place $t3 into the graphics                    
+        #instruction to place $t3 into the graphics, it would be array[row][$t3].                    
           
         # Decrement by 1 for next placement
         addi $t7, $t7, -1                  
