@@ -3,9 +3,10 @@
 	colorBoard:	.word 0x000000ff# color values written as 0x00RRGGBB
 	colorP1:	.word 0x00ff0000
 	colorP2:	.word 0x00ffff00
+	colorDarker:	.word 0x00999999
 .text
 main:
-drawGameOnBoot:				#the initial drawing of the game board
+drawGameOnBoot:				# the initial drawing of the game board
 	li	$t3, 0
 	la	$a0, frameBuffer	# array position
 	li	$a1, 16383		# stop point for this draw section
@@ -72,25 +73,463 @@ initialCircleLoop:
 	lw	$ra, 0($sp)
 	addi	$sp, $sp, 4
 	jr	$ra
-
 	
-fillCircle:				# fill circle at memory address $a0, radius $a2, with color $a3
+drawPlayerPiece:			# Use to fill circle on board at x = $a0, y = $a1, from player $a2
+					# (x, y) refers to board 7x6, with top left being (0, 0)
+	addi	$sp, $sp, -4
+	sw	$ra, 0($sp)		# setup stack point
+	
+	mul	$a0, $a0, 63
+	mul	$a1, $a1, 30208
+	add	$a0, $a0, 46655
+	add	$a0, $a0, $a1		# set $a0 to pixel number of circle location
+	
+	lw	$a3, colorP1
+	bne	$a2, 2, colorEqual	#decide color of circle
+	
+	lw	$a3, colorP2
+colorEqual:
+	add	$a2, $zero, 17
+	jal	fillCircle
+	
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 4
+	jr	$ra
+	
+fillCircle:				# fill circle at pixel $a0, radius $a2, with color $a3
 
-	addi	$sp, $sp, -8
+	addi	$sp, $sp, -20
 	sw	$ra, 0($sp)
 	sw	$s0, 4($sp)
+	sw	$s1, 8($sp)
+	sw	$s2, 16($sp)
+	sw	$s3, 20($sp)
+	sw	$a3, 20($sp)
+	
 	add	$s0, $a2, $zero		# needed for keeping the initial radius saved between func calls
 	li	$t0, 512		# hard coded value to seperate x and y values in the memory address
 	div	$a0, $t0
 	mfhi	$a0			# remainder = x cord = $a0
 	mflo	$a1			# quotient  = y cord = $a1
+	
+	
+	
+	
+
 fillCircleLoop:
 	jal	drawCircle		# draw circle at x,y cords, (just outline, not filled!
 	addi	$a2, $a2, -1		# reduce radius by 1 and loop to fill in circle
 	bnez	$a2, fillCircleLoop
+	
+fillStrayPixels:
+	lw	$s3, colorDarker
+	and	$a3, $a3, $s3
+	add	$s1, $zero, $a0
+	add	$s2, $zero, $a1
+	
+	
+	jal	drawPoint		# start drawing stray pixels
+	
+					# next set of pixels
+	add	$a0, $s1, 1
+	add	$a1, $s2, 1
+	jal	drawPoint
+		
+	add	$a0, $s1, -1
+	add	$a1, $s2, 1
+	jal	drawPoint
+	
+	add	$a0, $s1, 1
+	add	$a1, $s2, -1
+	jal	drawPoint
+
+	add	$a0, $s1, -1
+	add	$a1, $s2, -1
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 2
+	add	$a1, $s2, 4
+	jal	drawPoint
+		
+	add	$a0, $s1, -2
+	add	$a1, $s2, 4
+	jal	drawPoint
+	
+	add	$a0, $s1, 2
+	add	$a1, $s2, -4
+	jal	drawPoint
+
+	add	$a0, $s1, -2
+	add	$a1, $s2, -4
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 4
+	add	$a1, $s2, 2
+	jal	drawPoint
+		
+	add	$a0, $s1, -4
+	add	$a1, $s2, 2
+	jal	drawPoint
+	
+	add	$a0, $s1, 4
+	add	$a1, $s2, -2
+	jal	drawPoint
+
+	add	$a0, $s1, -4
+	add	$a1, $s2, -2
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 4
+	add	$a1, $s2, 5
+	jal	drawPoint
+		
+	add	$a0, $s1, -4
+	add	$a1, $s2, 5
+	jal	drawPoint
+	
+	add	$a0, $s1, 4
+	add	$a1, $s2, -5
+	jal	drawPoint
+
+	add	$a0, $s1, -4
+	add	$a1, $s2, -5
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 5
+	add	$a1, $s2, 4
+	jal	drawPoint
+		
+	add	$a0, $s1, -5
+	add	$a1, $s2, 4
+	jal	drawPoint
+	
+	add	$a0, $s1, 5
+	add	$a1, $s2, -4
+	jal	drawPoint
+
+	add	$a0, $s1, -5
+	add	$a1, $s2, -4
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 6
+	add	$a1, $s2, 6
+	jal	drawPoint
+		
+	add	$a0, $s1, -6
+	add	$a1, $s2, 6
+	jal	drawPoint
+	
+	add	$a0, $s1, 6
+	add	$a1, $s2, -6
+	jal	drawPoint
+
+	add	$a0, $s1, -6
+	add	$a1, $s2, -6
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 5
+	add	$a1, $s2, 8
+	jal	drawPoint
+		
+	add	$a0, $s1, -5
+	add	$a1, $s2, 8
+	jal	drawPoint
+	
+	add	$a0, $s1, 5
+	add	$a1, $s2, -8
+	jal	drawPoint
+
+	add	$a0, $s1, -5
+	add	$a1, $s2, -8
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 8
+	add	$a1, $s2, 5
+	jal	drawPoint
+		
+	add	$a0, $s1, -8
+	add	$a1, $s2, 5
+	jal	drawPoint
+	
+	add	$a0, $s1, 8
+	add	$a1, $s2, -5
+	jal	drawPoint
+
+	add	$a0, $s1, -8
+	add	$a1, $s2, -5
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 3
+	add	$a1, $s2, 9
+	jal	drawPoint
+		
+	add	$a0, $s1, -3
+	add	$a1, $s2, 9
+	jal	drawPoint
+	
+	add	$a0, $s1, 3
+	add	$a1, $s2, -9
+	jal	drawPoint
+
+	add	$a0, $s1, -3
+	add	$a1, $s2, -9
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 9
+	add	$a1, $s2, 3
+	jal	drawPoint
+		
+	add	$a0, $s1, -9
+	add	$a1, $s2, 3
+	jal	drawPoint
+	
+	add	$a0, $s1, 9
+	add	$a1, $s2, -3
+	jal	drawPoint
+
+	add	$a0, $s1, -9
+	add	$a1, $s2, -3
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 7
+	add	$a1, $s2, 9
+	jal	drawPoint
+		
+	add	$a0, $s1, -7
+	add	$a1, $s2, 9
+	jal	drawPoint
+	
+	add	$a0, $s1, 7
+	add	$a1, $s2, -9
+	jal	drawPoint
+
+	add	$a0, $s1, -7
+	add	$a1, $s2, -9
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 9
+	add	$a1, $s2, 7
+	jal	drawPoint
+		
+	add	$a0, $s1, -9
+	add	$a1, $s2, 7
+	jal	drawPoint
+	
+	add	$a0, $s1, 9
+	add	$a1, $s2, -7
+	jal	drawPoint
+
+	add	$a0, $s1, -9
+	add	$a1, $s2, -7
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 6
+	add	$a1, $s2, 11
+	jal	drawPoint
+		
+	add	$a0, $s1, -6
+	add	$a1, $s2, 11
+	jal	drawPoint
+	
+	add	$a0, $s1, 6
+	add	$a1, $s2, -11
+	jal	drawPoint
+
+	add	$a0, $s1, -6
+	add	$a1, $s2, -11
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 11
+	add	$a1, $s2, 6
+	jal	drawPoint
+		
+	add	$a0, $s1, -11
+	add	$a1, $s2, 6
+	jal	drawPoint
+	
+	add	$a0, $s1, 11
+	add	$a1, $s2, -6
+	jal	drawPoint
+
+	add	$a0, $s1, -11
+	add	$a1, $s2, -6
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 8
+	add	$a1, $s2, 12
+	jal	drawPoint
+		
+	add	$a0, $s1, -8
+	add	$a1, $s2, 12
+	jal	drawPoint
+	
+	add	$a0, $s1, 8
+	add	$a1, $s2, -12
+	jal	drawPoint
+
+	add	$a0, $s1, -8
+	add	$a1, $s2, -12
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 12
+	add	$a1, $s2, 8
+	jal	drawPoint
+		
+	add	$a0, $s1, -12
+	add	$a1, $s2, 8
+	jal	drawPoint
+	
+	add	$a0, $s1, 12
+	add	$a1, $s2, -8
+	jal	drawPoint
+
+	add	$a0, $s1, -12
+	add	$a1, $s2, -8
+	jal	drawPoint
+	
+
+					# next set of pixels
+	add	$a0, $s1, 9
+	add	$a1, $s2, 10
+	jal	drawPoint
+		
+	add	$a0, $s1, -9
+	add	$a1, $s2, 10
+	jal	drawPoint
+	
+	add	$a0, $s1, 9
+	add	$a1, $s2, -10
+	jal	drawPoint
+
+	add	$a0, $s1, -9
+	add	$a1, $s2, -10
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 10
+	add	$a1, $s2, 9
+	jal	drawPoint
+		
+	add	$a0, $s1, -10
+	add	$a1, $s2, 9
+	jal	drawPoint
+	
+	add	$a0, $s1, 10
+	add	$a1, $s2, -9
+	jal	drawPoint
+
+	add	$a0, $s1, -10
+	add	$a1, $s2, -9
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 11
+	add	$a1, $s2, 11
+	jal	drawPoint
+		
+	add	$a0, $s1, -11
+	add	$a1, $s2, 11
+	jal	drawPoint
+	
+	add	$a0, $s1, 11
+	add	$a1, $s2, -11
+	jal	drawPoint
+
+	add	$a0, $s1, -11
+	add	$a1, $s2, -11
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 10
+	add	$a1, $s2, 13
+	jal	drawPoint
+		
+	add	$a0, $s1, -10
+	add	$a1, $s2, 13
+	jal	drawPoint
+	
+	add	$a0, $s1, 10
+	add	$a1, $s2, -13
+	jal	drawPoint
+
+	add	$a0, $s1, -10
+	add	$a1, $s2, -13
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 13
+	add	$a1, $s2, 10
+	jal	drawPoint
+		
+	add	$a0, $s1, -13
+	add	$a1, $s2, 10
+	jal	drawPoint
+	
+	add	$a0, $s1, 13
+	add	$a1, $s2, -10
+	jal	drawPoint
+
+	add	$a0, $s1, -13
+	add	$a1, $s2, -10
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 4
+	add	$a1, $s2, 16
+	jal	drawPoint
+		
+	add	$a0, $s1, -4
+	add	$a1, $s2, 16
+	jal	drawPoint
+	
+	add	$a0, $s1, 4
+	add	$a1, $s2, -16
+	jal	drawPoint
+
+	add	$a0, $s1, -4
+	add	$a1, $s2, -16
+	jal	drawPoint
+	
+					# next set of pixels
+	add	$a0, $s1, 16
+	add	$a1, $s2, 4
+	jal	drawPoint
+		
+	add	$a0, $s1, -16
+	add	$a1, $s2, 4
+	jal	drawPoint
+	
+	add	$a0, $s1, 16
+	add	$a1, $s2, -4
+	jal	drawPoint
+
+	add	$a0, $s1, -16
+	add	$a1, $s2, -4
+	jal	drawPoint
+	
+		
 	add	$a2, $s0, $zero		# reset $a2 to initial radius before moving to next circle
 	lw	$ra, 0($sp)
-	addi	$sp, $sp, 4
+	lw	$s0, 4($sp)
+	lw	$s1, 8($sp)
+	lw	$s2, 16($sp)
+	lw	$a3, 20($sp)
+	addi	$sp, $sp, 16
 	jr	$ra
 	
 drawCircle:				#draw circle at x = $a0, y = $a1, radius $a2, using color $a3
