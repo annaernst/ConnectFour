@@ -12,82 +12,76 @@ ROW_SIZE:	.word 6
 COL_SIZE:	.word 7
 .eqv DATA_SIZE 4
 		 
-welcome:	.asciiz "Welcome to Connect Four!\n"
 printInE:	.asciiz "Invalid Move! Try Again!\n"
 
-colIndex:    .word 0
+colIndex:    	.word 0
+
+
+
+
 
 .text
-#Print Welcome Message
-	li $v0, 4
-	la $a0, welcome
-	syscall
+	jal drawGameOnBoot
      
 inputLoop:
 # Take WASD input    
-     li $v0, 12            
-     syscall
+	li $v0, 12            
+     	syscall
      
-     beq $v0, 'a', colLeft		# select column left
-     beq $v0, 'd', colRight		# select column right
-     beq $v0, 's' 			# play in current column
-     returnWASD:
-     
-# Adjust input and save --> coloumn
-#WHAT DOES THIS DO
-     addi $v0, $v0, -1    
-     sw   $v0, colIndex              
-# Check for invalid input
-     la  $a0, board			# base address of board into $a0
-     lw  $a1, COL_SIZE			# num of coloumns into 	     $a1
-     lw $a3, colIndex	
-     jal validInput	   
+     	beq $v0, 'a', colLeft		# select column left
+     	beq $v0, 'd', colRight		# select column right
+     	beq $v0, 's' 			# play in current column
+     	j inputLoop
+     	returnWASD:
+              
+# Check for invalid input (column full?)
+     	la  $a0, board				# base address of board into $a0
+     	lw  $a1, COL_SIZE			# num of coloumns into 	     $a1
+     	lw $a3, colIndex	
+     	jal validInput	   
 # Upload to Array
-     la $a0, board
-     addi $a2, $0, -1			# row index set to -1
-     lw  $a1, COL_SIZE			# num of coloumns into 	     $a1
-     jal addValUser				# add to board(next available row)	
+     	la $a0, board
+     	addi $a2, $0, -1			# row index set to -1
+     	lw  $a1, COL_SIZE			# num of coloumns into 	     $a1
+     	jal addValUser				# add to board(next available row)	
 
-
+# HEREEEEEEEEEEEEEEEEEEEEEEEE
 
 addValUser:	#$a0 -> base addr, $a1 -> COL_SIZE,  $a2 -> row index,  $a3 -> coloumn index, 	
-addi $a2, $a2, 1
-move $s0, $ra
-jal getAt		#result in $v0, address in $v1
-bne $v0, $0, addValUser
-move $ra, $s0
-# set arguments before call
-addi $t0, $0, 1    
-sw $t0, ($v1)
-jr $ra
+	addi $a2, $a2, 1
+	move $s0, $ra
+	jal getAt		#result in $v0, address in $v1
+	bne $v0, $0, addValUser
+	move $ra, $s0
+	# set arguments before call
+	addi $t0, $0, 1    
+	sw $t0, ($v1)
+	jr $ra
 
 # Check Valid Input
-validInput:				
-# If input <1 or >7, try again
-     bgt  $a3, 6, inputError
-     blt  $a3, 0, inputError
+validInput:			
 # Check if coloumn is full		(getAt function) $a0 -> base addr, $a1 -> COL_SIZE,  $a2 -> row index,  $a3 -> coloumn index
-     addi $a2, $0, 5			# row index into $a2
-     move $s0, $ra
-     jal getAt
-     # result in $v0
-     move $ra, $s0
-     bnez $v0, inputError		# if value is not ZERO (empty), then retake input
-     jr $ra				# else continue program
+    	addi $a2, $0, 5			# row index into $a2
+     	move $s0, $ra
+     	jal getAt
+     	# result in $v0
+     	move $ra, $s0
+     	bnez $v0, inputError		# if value is not ZERO (empty), then retake input
+     	jr $ra				# else continue program
      
     
 getAt:	#$a0 -> base addr, $a1 -> COL_SIZE,  $a2 -> row index,  $a3 -> coloumn Index
-move $s1, $t0
-add $t0, $t0, $0
-     lw  $a3, colIndex
-     mul $t0, $a1, $a2 		        # row index * COL_SIZE
-     add $t0, $t0, $a3			# + coloumnIndex
-     mul $t0, $t0, DATA_SIZE			# * Data Size
-     add $t0, $t0, $a0			# + base addr
-     lw  $v0, ($t0)			# value in $v0
-     la  $v1, ($t0)
-move $t0, $s1
-     jr  $ra				
+	move $s1, $t0
+	add $t0, $t0, $0
+     	lw  $a3, colIndex
+     	mul $t0, $a1, $a2 		        # row index * COL_SIZE
+     	add $t0, $t0, $a3			# + coloumnIndex
+     	mul $t0, $t0, DATA_SIZE		# * Data Size
+     	add $t0, $t0, $a0			# + base addr
+     	lw  $v0, ($t0)				# value in $v0
+     	la  $v1, ($t0)
+	move $t0, $s1
+     	jr  $ra				
 
      
 inputError:
@@ -96,6 +90,43 @@ inputError:
      syscall
      j inputLoop
      
+#------------------
+# COLUMN SELECTION
+#------------------
+
+# decrement colIndex
+colLeft:
+	lw $t9, colIndex
+	li $t8, 0
+	beq $t9, $t8, colLast 		# if first column, select last
+	li $t8, 1
+	sub $t9, $t9, $t8		# otherwise, move one left
+	sw $t9, colIndex
+	j returnWASD
+# increment colIndex
+colRight:
+	lw $t9, colIndex
+	lw $t8, COL_SIZE
+	sub $t8, $t8, 1			# zero index adjustment
+	beq $t9, $t8, colFirst		# if last column, select first
+	li $t8, 0
+	add $t9, $t9, $t8		# otherwise, move one right
+	sw $t9, colIndex
+	j returnWASD
+# set colIndex to the last column
+colLast:
+	li $t9, COL_SIZE
+	sub $t9, $t9, 1			# zero index adjustment
+	sw $t9, colIndex
+	j returnWASD
+# set colIndex to 0
+colFirst:
+	li $t9, 0
+	sw $t9, colIndex
+	j returnWASD
+    
+# HEREEEEEEEEEEEEEEEEEEEEEEEEEEE
+    
 computerValid:
    addi $sp, $sp, -4   # Adjust Stack Pointer
    sw $ra, 0($sp)      # Save current $ra (Return Address of main)
@@ -165,32 +196,65 @@ computerValid:
         addi $t7, $t7, -1                  
         sw $t7, 0($t4)                   
         lw $ra, 0($sp)                   
-        addi $sp, $sp, 4                 
+        addi $sp, $sp, 4   
+        j exit              
 
-colLeft:
-	lw $t9, colIndex
-	li $t8, 1
-	beq $t9, $t8, colLast 		# if first column, select last
-	sub $t9, $t9, $t8		# otherwise, move one left
-	sw $t9, colIndex
-	j returnWASD
-colRight:
-	lw $t9, colIndex
-	lw $t8, COL_SIZE
-	beq $t9, $t8, colFirst		# if last column, select first
-	li $t8, 1
-	add $t9, $t9, $t8		# otherwise, move one right
-	sw $t9, colIndex
-	j returnWASD
-colLast:
-	li $t9, COL_SIZE
-	sw $t9, colIndex
-	j returnWASD
-colFirst:
-	li $t9, 1
-	sw $t9, colIndex
-	j returnWASD
+#---------------
+# SOUND EFFECTS
+#---------------
+
+errorSound:
+li $a0, 72 # pitch (0-127) - this is the C an octave above middle C
+li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
+li $a3, 100 # volume (0-127)
+li $a2, 55
+li $v0, 33
+jr $ra
+
+dropSound:
+li $a0, 67 # pitch (0-127) 
+li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
+li $a3, 100 # volume (0-127)
+li $a2, 117 # instrument 
+li $v0, 33
+syscall
+jr $ra
+
+lostSound:
+li $a0, 70 # pitch (0-127)
+li $a1, 400 # duration of each sound in milliseconds (1000 = 1 second)
+li $a3, 100 # volume (0-127)
+li $a2, 14 # instrument 
+li $t0, 67 # ending pitch
+lostSoundLoop:
+li $v0, 33
+syscall
+sub $a0, $a0, 1
+bne $a0, $t0, lostSoundLoop
+sub $a0, $a0, 2
+li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
+li $v0, 33
+syscall
+jr $ra
+
+wonSound:
+li $a0, 67 # pitch (0-127) 
+li $a1, 400 # duration of each sound in milliseconds (1000 = 1 second)
+li $a3, 100 # volume (0-127)
+li $a2, 14 # instrument 
+li $t0, 70 # ending pitch
+lostSoundLoop:
+li $v0, 33
+syscall
+addi $a0, $a0, 1
+bne $a0, $t0, lostSoundLoop
+sub $a0, $a0, 2
+li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
+li $v0, 33
+syscall
+jr $ra
+
 # Terminate Program
-Exit:
+exit:
      li $v0, 10
      syscall
