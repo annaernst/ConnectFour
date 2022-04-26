@@ -110,7 +110,7 @@ checkForWin:
          addiu $t7, $t7, 1
          addiu $t2, $t2, 8
     bgt $t7, 3, UserWon
-         j checkUR
+         j checkRightDiagonal
          
          #From start, go Left Diagonal as far possible
     checkLeftDiagonal:
@@ -216,3 +216,7 @@ checkForWin:
     syscall
     li $v0, 10
     syscall
+    
+    lw	$ra, 0($sp)
+    	addi	$sp, $sp, 32
+	jr	$ra
