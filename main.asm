@@ -30,7 +30,7 @@ inputLoop:
      
      	beq $v0, 'a', colLeft		# select column left
      	beq $v0, 'd', colRight		# select column right
-     	beq $v0, 's' 			# play in current column
+     	beq $v0, 's', makeAMove	# play in current column
      	j inputLoop
      	returnWASD:
               
@@ -45,6 +45,7 @@ inputLoop:
      	lw  $a1, COL_SIZE			# num of coloumns into 	     $a1
      	jal addValUser				# add to board(next available row)	
 
+	jal computerValid
 # HEREEEEEEEEEEEEEEEEEEEEEEEE
 
 addValUser:	#$a0 -> base addr, $a1 -> COL_SIZE,  $a2 -> row index,  $a3 -> coloumn index, 	
@@ -85,6 +86,7 @@ getAt:	#$a0 -> base addr, $a1 -> COL_SIZE,  $a2 -> row index,  $a3 -> coloumn In
 
      
 inputError:
+	jal errorSound
      li $v0, 4
      la $a0, printInE
      syscall
@@ -197,62 +199,62 @@ computerValid:
         sw $t7, 0($t4)                   
         lw $ra, 0($sp)                   
         addi $sp, $sp, 4   
-        j exit              
+        jr $ra              
 
 #---------------
 # SOUND EFFECTS
 #---------------
 
 errorSound:
-li $a0, 72 # pitch (0-127) - this is the C an octave above middle C
-li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
-li $a3, 100 # volume (0-127)
-li $a2, 55
-li $v0, 33
-jr $ra
+	li $a0, 72 # pitch (0-127) - this is the C an octave above middle C
+	li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
+	li $a3, 100 # volume (0-127)
+	li $a2, 55
+	li $v0, 33
+	jr $ra
 
 dropSound:
-li $a0, 67 # pitch (0-127) 
-li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
-li $a3, 100 # volume (0-127)
-li $a2, 117 # instrument 
-li $v0, 33
-syscall
-jr $ra
+	li $a0, 67 # pitch (0-127) 
+	li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
+	li $a3, 100 # volume (0-127)
+	li $a2, 117 # instrument 
+	li $v0, 33
+	syscall
+	jr $ra
 
 lostSound:
-li $a0, 70 # pitch (0-127)
-li $a1, 400 # duration of each sound in milliseconds (1000 = 1 second)
-li $a3, 100 # volume (0-127)
-li $a2, 14 # instrument 
-li $t0, 67 # ending pitch
+	li $a0, 70 # pitch (0-127)
+	li $a1, 400 # duration of each sound in milliseconds (1000 = 1 second)
+	li $a3, 100 # volume (0-127)
+	li $a2, 14 # instrument 
+	li $t0, 67 # ending pitch
 lostSoundLoop:
-li $v0, 33
-syscall
-sub $a0, $a0, 1
-bne $a0, $t0, lostSoundLoop
-sub $a0, $a0, 2
-li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
-li $v0, 33
-syscall
-jr $ra
+	li $v0, 33
+	syscall
+	sub $a0, $a0, 1
+	bne $a0, $t0, lostSoundLoop
+	sub $a0, $a0, 2
+	li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
+	li $v0, 33
+	syscall
+	jr $ra
 
 wonSound:
-li $a0, 67 # pitch (0-127) 
-li $a1, 400 # duration of each sound in milliseconds (1000 = 1 second)
-li $a3, 100 # volume (0-127)
-li $a2, 14 # instrument 
-li $t0, 70 # ending pitch
+	li $a0, 67 # pitch (0-127) 
+	li $a1, 400 # duration of each sound in milliseconds (1000 = 1 second)
+	li $a3, 100 # volume (0-127)
+	li $a2, 14 # instrument 
+	li $t0, 70 # ending pitch
 lostSoundLoop:
-li $v0, 33
-syscall
-addi $a0, $a0, 1
-bne $a0, $t0, lostSoundLoop
-sub $a0, $a0, 2
-li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
-li $v0, 33
-syscall
-jr $ra
+	li $v0, 33
+	syscall
+	addi $a0, $a0, 1
+	bne $a0, $t0, lostSoundLoop
+	sub $a0, $a0, 2
+	li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
+	li $v0, 33
+	syscall
+	jr $ra
 
 # Terminate Program
 exit:
