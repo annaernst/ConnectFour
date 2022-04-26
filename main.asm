@@ -16,6 +16,9 @@ printInE:	.asciiz "Invalid Move! Try Again!\n"
 
 colIndex:    	.word 0
 
+tieprompt: .asciiz "It's a Tie!\n"
+userwinprompt: .asciiz "You have won!\n"
+compwinprompt: .asciiz "The Computer has won!\n"
 
 
 
@@ -24,6 +27,7 @@ colIndex:    	.word 0
 	jal drawGameOnBoot
      
 inputLoop:
+	jal checkForWin
 # Take WASD input    
 	li $v0, 12            
      	syscall
@@ -32,8 +36,8 @@ inputLoop:
      	beq $v0, 'd', colRight		# select column right
      	beq $v0, 's', makeAMove	# play in current column
      	j inputLoop
-     	returnWASD:
               
+makeAMove:
 # Check for invalid input (column full?)
      	la  $a0, board				# base address of board into $a0
      	lw  $a1, COL_SIZE			# num of coloumns into 	     $a1
@@ -44,9 +48,7 @@ inputLoop:
      	addi $a2, $0, -1			# row index set to -1
      	lw  $a1, COL_SIZE			# num of coloumns into 	     $a1
      	jal addValUser				# add to board(next available row)	
-
 	jal computerValid
-# HEREEEEEEEEEEEEEEEEEEEEEEEE
 
 addValUser:	#$a0 -> base addr, $a1 -> COL_SIZE,  $a2 -> row index,  $a3 -> coloumn index, 	
 	addi $a2, $a2, 1
@@ -60,7 +62,7 @@ addValUser:	#$a0 -> base addr, $a1 -> COL_SIZE,  $a2 -> row index,  $a3 -> colou
 	jr $ra
 
 # Check Valid Input
-validInput:			
+validInput:
 # Check if coloumn is full		(getAt function) $a0 -> base addr, $a1 -> COL_SIZE,  $a2 -> row index,  $a3 -> coloumn index
     	addi $a2, $0, 5			# row index into $a2
      	move $s0, $ra
@@ -104,7 +106,7 @@ colLeft:
 	li $t8, 1
 	sub $t9, $t9, $t8		# otherwise, move one left
 	sw $t9, colIndex
-	j returnWASD
+	j inputLoop
 # increment colIndex
 colRight:
 	lw $t9, colIndex
@@ -114,92 +116,70 @@ colRight:
 	li $t8, 0
 	add $t9, $t9, $t8		# otherwise, move one right
 	sw $t9, colIndex
-	j returnWASD
+	j inputLoop
 # set colIndex to the last column
 colLast:
 	li $t9, COL_SIZE
 	sub $t9, $t9, 1			# zero index adjustment
 	sw $t9, colIndex
-	j returnWASD
+	j inputLoop
 # set colIndex to 0
 colFirst:
 	li $t9, 0
 	sw $t9, colIndex
-	j returnWASD
-    
-# HEREEEEEEEEEEEEEEEEEEEEEEEEEEE
+	j inputLoop
     
 computerValid:
-   addi $sp, $sp, -4   # Adjust Stack Pointer
-   sw $ra, 0($sp)      # Save current $ra (Return Address of main)
+   addi $sp, $sp, -4   
+   sw $ra, 0($sp)     
         
-   subu $t8, $a5, $a0  
-   addiu $t8, $t8, 1  
-        
-  
-   jal getComputer    
-   move $t1, $v0      
-   
-   
-   lw $ra, 0($sp)      
-   addi $sp, $sp, 4    
+    li $v0, 42  
+    syscall
+    addi $a1, $a0, 50
+    li $v0, 42  
+    syscall
+   subu $t0, $a1, $a0  
+   addiu $t0, $t0, 1  
+
    
    # Compute Computer's position and return
-   divu $t1, $t8       
-   mfhi $t2            
-   addu $t2, $t2, $a0  
+   divu $t1, $t0, 7      
+   mfhi $t2            #t2 is the mod with 7 for column
    move $v0, $t2       
    jr $ra              
         
-   getComputer:
-       
-        li $t3, 46655         
-        li $t4, 30208    
         
-        andi $t5, $s1, 81293  #Using random number as a seed to generate computer position
-        srl $t6, $s1, 16      
-        mul $s1, $t3, $t5     
-        addu $s1, $s1, $t6   
-        andi $t5, $s0, 78597 
-        srl $t6, $s0, 16     
-        mul $s0, $t4, $t5    
-        addu $s0, $s0, $t6    
-        sll $t7, $s1, 16      
-        addu $t9, $t7, $s0  
-        move $v0, $t9         
-        jr $ra                
-        
-  computerMove:
-        li $a0, 1                         
-        li $a5, 7                   
+ computerMove:
+        li $a0, 0                         
+        li $a1, 6                
         addi $sp, $sp, -4                 
         sw $ra, 0($sp)                  
    
         computer: 
         	  jal computerValid    
-                  move $t2, $v0            
-                  addi $t5, $t2, -1        
-                  blt $t2, $a0, computer 
-                  bgt $t2, $a5, computer   
+                  move $t2, $v0            #moves the random number of $v0 to t2, which will be the column computer will choose
+                  addi $t5, $t2, -1        #decreases the value by 1 in register t5
+                  blt $t2, $a0, computer #loop back if number is less than 1
+                  bgt $t2, $a1, computer   #loop back if number is greater than 7
                   li $t6, 4                
-                  mul $t4, $t5, $t6        
-                  add $t4, $s5, $t4        
+                  mul $t4, $t5, $t6       #$t4 = i(computer column - 1) * 4 (index times 4 bytes)
+                  add $t4, $s5, $t4        # $t4 = placement of computer Column - 1 (Base + Offset)
                   lw $t7, 0($t4)           
                   
                   blt $t7, $zero, computer # if placement value less than 0, Branch to computer again
          
-       
+       #used to set the next row for the computer placement 
         mul $t3, $t7, $s3                  
         add $t3, $t3, $t2                
         add $t3, $s4, $t3              
-        #instruction to place $t3 into the graphics, it would be array[row][$t3].                    
+        #instruction to place $t3 into the graphics                    
           
         # Decrement by 1 for next placement
         addi $t7, $t7, -1                  
         sw $t7, 0($t4)                   
         lw $ra, 0($sp)                   
-        addi $sp, $sp, 4   
-        jr $ra              
+        addi $sp, $sp, 4                 
+
 
 #---------------
 # SOUND EFFECTS
