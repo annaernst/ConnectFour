@@ -13,4 +13,4 @@
 9. Using the A and D arrow keys to shift left to right and choose which column to drop your coin, and press S to select that column. 
 10. If valid, coin will appear in for player’s turn, and one should appear for the computer’s turn
 11. If invalid, the computer will play an error sound
-13. Once the computer or player has made 4 in a row, the bitmap will display who won, and end the program
+13. Once the computer or player has made 4 in a row, the bitmap will display who won, and program will end
