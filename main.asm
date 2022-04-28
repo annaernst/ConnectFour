@@ -36,7 +36,7 @@ compwinprompt: .asciiz "The Computer has won!\n"
 
      
 inputLoop:
-	jal checkForWin
+	#jal checkForWin
 	
 
 	
@@ -427,6 +427,8 @@ colmEraseLoop:
 	
 	
 	move	$a0, $s2
+	addi	$s2, $s2, 1
+	sw	$s2, cColmSelect($zero)
 	add	$a0, $a0, 1
 	mul	$a0, $a0, 63
 	add	$a0, $a0, -12
