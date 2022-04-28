@@ -115,10 +115,8 @@ inputError:
 # decrement colIndex
 colLeft:
 	lw $t9, colIndex
-	li $t8, 0
-	beq $t9, $t8, colLast 		# if first column, select last
-	li $t8, 1
-	sub $t9, $t9, $t8		# otherwise, move one left
+	beq $t9, $zero, colLast 		# if first column, select last
+	addi $t9, $t9, -1		# otherwise, move one left
 	sw $t9, colIndex
 	lw $a0, colIndex
 	jal colorColmSelect
@@ -129,8 +127,7 @@ colRight:
 	lw $t8, COL_SIZE
 	sub $t8, $t8, 1			# zero index adjustment
 	beq $t9, $t8, colFirst		# if last column, select first
-	li $t8, 0
-	add $t9, $t9, $t8		# otherwise, move one right
+	addi $t9, $t9, 1		# otherwise, move one right
 	sw $t9, colIndex
 	lw $a0, colIndex
 	jal colorColmSelect
