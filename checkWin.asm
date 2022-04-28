@@ -14,11 +14,11 @@ compwinprompt: .asciiz "The Computer has won!\n"
 .text
 #register v0 would be the offset of the coin last placed starting from column 0 and register a0 is the player/comp number (1 = player, computer = 2)
 checkForWin:
-    addiu $sp, $sp, -4
+    addi $sp, $sp, -4
          sw $ra, ($sp)
-        li $t8, 7
+        li $t8, 7 #used for mod check
         #register $t2 is used to check for coins to the left and #t5 is used to check for coins to the right
-    li $t7, 1
+    li $t7, 1 #used as counter
     move $t2, $v0
     move $t5, $v0
         
@@ -31,12 +31,18 @@ checkForWin:
          beqz $t3, checkRight
          
          #Checking left
-         lb $t1, -1($t0)
+         lb $t1, -1($t0) #left of starting location
          bne $t1, $a0, checkRight    #In this Check, I would be using the value of the coin to be equal to player number
          addiu $t7, $t7, 1
          addiu $t2, $t2, -1
     bgt $t7, 3, UserWon
+   # beq $7, 3, computerLeft
          j checkLeft
+         
+       # computerLeft:
+    	#li $a2, 2
+    	#addi $a0, $zero, $t7
+    	#jal drawPlayerPiece
          
          #From start, go RIGHT as far possible
     checkRight:
@@ -48,13 +54,18 @@ checkForWin:
     beq $t3, 6, endHorizontal
     
     #Checking right
-    lb $t1, 1($t0)
-    bne $t1, $a0, endHorizontal
-    addiu $t7, $t7, 1
-    addiu $t5, $t5, 1
+    lb $t1, 1($t0) #check right
+    bne $t1, $a0, endHorizontal #branch out when 
+    addiu $t7, $t7, 1 #counter
+    addiu $t5, $t5, 1 #moving right one
     bgt $t7, 3, UserWon
+   # beq $7, 3, computerRight
     j checkRight
     
+   # computerRight:
+    #	li $a2, 2
+    #	addi $a0, $zero, $t7
+    #	jal drawPlayerPiece
     endHorizontal:
     #Check vertically for win
           #register $t2 is used to check for coins to going up and #t5 is used to check for coins to going down
@@ -73,7 +84,13 @@ checkForWin:
          addiu $t7, $t7, 1
          addiu $t2, $t2, 7
     bgt $t7, 3, UserWon
+  #  beq $7, 3, computerMove
          j checkUp
+         
+     #   computerUp:
+    #	li $a2, 2
+    #	addi $a1, $zero, $t7
+    #	jal drawPlayerPiece
          
          #From start, go DOWN as far possible
     checkDown:
@@ -88,7 +105,12 @@ checkForWin:
     addiu $t7, $t7, 1
     addiu $t5, $t5, -7
     bgt $t7, 3, UserWon
+  #  beq $7, 3, computerLeft
     j checkDown
+  #  computerDown:
+   # 	li $a2, 2
+    #	addi $a1, $zero, $t7
+    #	jal drawPlayerPiece
     
     endVert:
          
