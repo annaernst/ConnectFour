@@ -6,7 +6,6 @@ frameBuffer:	.align 2
 	colorP2:	.word 0x00ffff00
 	colorDarker:	.word 0x00999999
 	cColmSelect:	.word 1
-
 board:      
 		.word 0, 0, 0, 0, 0, 0, 0
 		.word 0, 0, 0, 0, 0, 0, 0
@@ -28,7 +27,7 @@ userwinprompt: .asciiz "You have won!\n"
 compwinprompt: .asciiz "The Computer has won!\n"
 
 
-
+.globl board inputError drawPlayerPiece
 
 .text
 	jal drawGameOnBoot
@@ -52,61 +51,125 @@ inputLoop:
      	j inputLoop
               
 makeAMove:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
 # Check for invalid input (column full?)
     	la  $a0, board				# base address of board into $a0
      	lw  $a1, COL_SIZE			# num of coloumns into 	     $a1
      	lw $a3, colIndex	
-     	jal validInput	   
+     	jal validInput
 # Upload to Array
      	la $a0, board
      	addi $a2, $0, -1			# row index set to -1
      	lw  $a1, COL_SIZE			# num of coloumns into 	     $a1
-     	jal addValUser				# add to board(next available row)	
-	jal computerValid
+ #    	jal addValUser				# add to board(next available row)	
+#	jal computerValid
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	j startingMoves
 
-addValUser:	#$a0 -> base addr, $a1 -> COL_SIZE,  $a2 -> row index,  $a3 -> coloumn index, 	
-	addi $a2, $a2, 1
-	move $s0, $ra
-	jal getAt		#result in $v0, address in $v1
-	bne $v0, $0, addValUser
-	move $ra, $s0
+#addValUser:	#$a0 -> base addr, $a1 -> COL_SIZE,  $a2 -> row index,  $a3 -> coloumn index, 	
+#	addi $a2, $zero, 1
+#	addi $sp, $sp, -4
+#	sw $ra, 0($sp)
+#	jal getAt		#result in $v0, address in $v1
+#	lw $ra, 0($sp)
+#	addi $sp, $sp, 4
+	#beqz $v0, addValUser
 	# set arguments before call
-	addi $t0, $0, 1    
-	sw $t0, ($v1)
-	jr $ra
+#	addi $t0, $zero, 1    
+#	sw $t0, ($v1)
+#	jr $ra
 
 # Check Valid Input
 validInput:
 # Check if coloumn is full		(getAt function) $a0 -> base addr, $a1 -> COL_SIZE,  $a2 -> row index,  $a3 -> coloumn index
-    	addi $a2, $0, 5			# row index into $a2
-    	move $s0, $ra
+    	addi $a2, $zero, 5			# row index into $a2
+    	addi $sp, $sp -4
+    	sw $ra, 0($sp)
      	jal getAt
      	# result in $v0
-     	move $ra, $s0
-     	bnez $v0, inputError		# if value is not ZERO (empty), then retake input
+     	#bnez $v0, inputError		# if value is not ZERO (empty), then retake input
+     	
+     	li $t9, 1
+     	li $t7, 7
+     	
+     	mul $t7, $t7, $a2
+     	add $t8, $t7, $a3
+     	sll $t8, $t8, 2
+     	sw $t9, board($t8)
+     	
+     	addi $sp, $sp, -20
+     	sw $ra, 0($sp)
+     	sw $a0, 4($sp)
+     	sw $a1, 8($sp)
+     	sw $a2, 12($sp)
+     	sw $a3, 16($sp)
+     	add $a0, $a3, $zero
+     	add $a1, $a2, $zero
+     	addi $a2, $zero, 1
+     	
+     	jal drawPlayerPiece
+     	
+     	lw $ra, 0($sp)
+     	lw $a0, 4($sp)
+     	lw $a1, 8($sp)
+     	lw $a2, 12($sp)
+     	lw $a3, 16($sp)
+     	addi $sp, $sp, 20
+     	
+     	lw $ra, 0($sp)
+     	addi $sp, $sp, 4
      	jr $ra				# else continue program
      
     
 getAt:	#$a0 -> base addr, $a1 -> COL_SIZE,  $a2 -> row index,  $a3 -> coloumn Index
-	move $s1, $t0
-	add $t0, $t0, $0
-     	lw  $a3, colIndex
-     	mul $t0, $a1, $a2 		        # row index * COL_SIZE
-     	add $t0, $t0, $a3			# + coloumnIndex
-     	mul $t0, $t0, DATA_SIZE		# * Data Size
-     	add $t0, $t0, $a0			# + base addr
-     	lw  $v0, ($t0)				# value in $v0
-     	la  $v1, ($t0)
-	move $t0, $s1
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	#move $s1, $t0 
+     	#lw  $a3, colIndex
+     	#mul $t0, $a1, $a2 		        # row index * COL_SIZE
+     	#add $t0, $t0, $a3			# + coloumnIndex
+     	#mul $t0, $t0, DATA_SIZE		# * Data Size
+     	#add $t0, $t0, $a0			# + base addr
+     	#lw  $v0, 0($t0)				# value in $v0
+     	#la  $v1, ($t0)
+	#move $t0, $s1
+	
+	
+     	
+     	
+     	getAtLoop:
+     	li $t7, 7
+     	bltz $a2, inputError
+     	mul $t7, $t7, $a2
+     	add $t8, $t7, $a3
+     	sll $t8, $t8, 2
+     	lw $t9, board($t8)
+     	
+     	beqz $t9, getAtLoopEnd
+     	addi $a2, $a2, -1
+     	j getAtLoop
+     	#check if t9 is 0
+     	#if it is zero, we can continue and place the piece
+     	#if it is not zero, we increment $a2 by 1 and repeat the above section
+     	#except, if after the increment $a2 is greater than 6, in which we send an error
+	
+	getAtLoopEnd:
+	
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
      	jr  $ra				
 
      
 inputError:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
 	jal errorSound
-     li $v0, 4
-     la $a0, printInE
-     syscall
-     j inputLoop
+	lw $ra, 0($sp)
+	addi $sp, $sp 4
+	j inputLoop
      
 #------------------
 # COLUMN SELECTION
@@ -205,12 +268,12 @@ computerValid:
 #---------------
 
 errorSound:
-#	li $a0, 72 # pitch (0-127) - this is the C an octave above middle C
-#	li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
-#	li $a3, 100 # volume (0-127)
-#	li $a2, 55
-#	li $v0, 33
-#	jr $ra
+	li $a0, 72 # pitch (0-127) - this is the C an octave above middle C
+	li $a1, 1000 # duration of each sound in milliseconds (1000 = 1 second)
+	li $a3, 100 # volume (0-127)
+	li $a2, 55
+	li $v0, 33
+	jr $ra
 
 dropSound:
 #	li $a0, 67 # pitch (0-127) 
