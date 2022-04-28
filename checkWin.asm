@@ -8,6 +8,9 @@ board:      .word 0, 0, 0, 0, 0, 0, 0
 tieprompt: .asciiz "It's a Tie!\n"
 userwinprompt: .asciiz "You have won!\n"
 compwinprompt: .asciiz "The Computer has won!\n"
+
+.globl checkForWin
+
 .text
 #register v0 would be the offset of the coin last placed starting from column 0 and register a0 is the player/comp number (1 = player, computer = 2)
 checkForWin:

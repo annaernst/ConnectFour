@@ -1,13 +1,24 @@
 .data
-	frameBuffer:	.space 0x100000	# set up space for 2d array of pixels
+	frameBuffer:	.align 2
+			.space 0x100000	# set up space for 2d array of pixels
 	colorBoard:	.word 0x000000ff# color values written as 0x00RRGGBB
 	colorP1:	.word 0x00ff0000
 	colorP2:	.word 0x00ffff00
 	colorDarker:	.word 0x00999999
 	cColmSelect:	.word 1
+	
+.globl drawGameOnBoot
+.globl drawPlayerPiece
+.globl colorColmSelect
+
 .text
-main:
+	
+	
+	
 drawGameOnBoot:				# the initial drawing of the game board
+	addi	$sp, $sp, -4
+	sw	$ra, 0($sp)
+	
 	li	$t3, 0
 	la	$a0, frameBuffer	# array position
 	li	$a1, 16383		# stop point for this draw section
@@ -22,35 +33,52 @@ drawGameOnBoot:				# the initial drawing of the game board
 	jal	drawInitialColmSelect	# draw colm select on colm 0
 	jal	drawInitialField	# draw initial white circles on board
 	
-
-	
-	addi	$v0, $zero, 17
-	syscall
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 4
+	jr	$ra
 	
 drawTop:				#draws above board full white
+	addi	$sp, $sp, -4
+	sw	$ra, 0($sp)
+
 	sw	$a2, 0($a0)
 	addi	$a0, $a0, 4
 	addi	$t3, $t3, 1
 	bne	$a1, $t3, drawTop
+	
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 4
 	jr	$ra
 	
 
 
 	
 drawBoard:				#draws board full blue no circles yet
+	addi	$sp, $sp, -4
+	sw	$ra, 0($sp)
+	
 	sw	$a2, 0($a0)
 	addi	$a0, $a0, 4
 	addi	$t3, $t3, 1
 	bne	$a1, $t3, drawBoard
+	
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 4
 	jr	$ra
 
 	
 	
 drawBot:				#draws below board full white
+	addi	$sp, $sp, -4
+	sw	$ra, 0($sp)
+	
 	sw	$a2, 0($a0)
 	addi	$a0, $a0, 4
 	addi	$t3, $t3, 1
 	bne	$a1, $t3, drawBot
+	
+	lw	$ra, 0($sp)
+	addi	$sp, $sp, 4
 	jr	$ra
 
 
