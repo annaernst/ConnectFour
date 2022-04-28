@@ -101,9 +101,7 @@
         jal drawPlayerPiece
         # decrement by 1 for next placement
         addi $a1, $a1, 1                 
-                           
-        lw $ra, 0($sp)     #restores from stack
-        addi $sp, $sp, 4                 
+                                         
         
         #restores registers from stack
         lw $ra, 0($sp)                     
